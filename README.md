@@ -5,4 +5,4 @@ to do:
 
 - intergrate animation
 
-- make slides and checkboxes for rendering parameters
+- render normal maps
