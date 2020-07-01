@@ -11,60 +11,63 @@ class RendererButton(bpy.types.Operator):
     bl_label = "Render"
     bl_idname = "wm.render_2d_animation"
     
-    # class param defaults
-    resolution_x = 1920
-    resolution_y = 1080
-    anti_aliasing = True
-    transparency = True
-    animation = False
-    perspective = False
-    output_path = os.getcwd() + "/output.png"
-    
     def set_resolution(self, scene):
-        scene.render.resolution_x = RendererButton.resolution_x
-        scene.render.resolution_y = RendererButton.resolution_y
+        scene.render.resolution_x = scene.resolution_hor
+        scene.render.resolution_y = scene.resolution_ver
         scene.render.resolution_percentage = 100
     
     def set_anti_aliasing(self, scene):
-        if RendererButton.anti_aliasing:
+        if scene.anti_aliasing:
             scene.render.filter_size = 1.50
         else:
             scene.render.filter_size = 0
     
     def set_transparency(self, scene):
-        scene.render.film_transparent = RendererButton.transparency
+        scene.render.film_transparent = scene.transparency
         
-    def set_perspective(self):
-        if RendererButton.perspective:
+    def set_perspective(self, scene):
+        if scene.perspective:
             bpy.data.cameras['Camera'].type = 'PERSP'
         else:
             bpy.data.cameras['Camera'].type = 'ORTHO'
     
     def set_output_path(self, scene):
-        scene.render.filepath = RendererButton.output_path
+        scene.render.filepath = scene.output_path
     
     def execute(self, context):
         scene = context.scene
         scene.render.engine = 'BLENDER_EEVEE'
-        
+
         self.set_resolution(scene)
         self.set_anti_aliasing(scene)
         self.set_transparency(scene)
-        self.set_perspective()
+        self.set_perspective(scene)
         self.set_output_path(scene)
         
-        bpy.ops.render.render(animation=RendererButton.animation, write_still=True)
+        bpy.ops.render.render(animation=scene.animation, write_still=True)
         
         return { 'FINISHED' }   
 
-class Animator(bpy.types.Menu):
+class Animator(bpy.types.Panel):
     bl_description = "Blender 2D projector animator"
     bl_label = "2D Animator"
-    bl_idname = "2D Animator"
+    bl_idname = "wm.2d_animator"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "Tool"
 
     def draw(self, context):
         layout = self.layout
-        #todo: sliders and checkboxes
+        
+        scene = context.scene
+        layout.prop(scene, "resolution_hor")
+        layout.prop(scene, "resolution_ver")
+        layout.prop(scene, "anti_aliasing")
+        layout.prop(scene, "transparency")
+        layout.prop(scene, "animation")
+        layout.prop(scene, "perspective")
+        layout.prop(scene, "output_path")
+        
         layout.separator()
         layout.operator(RendererButton.bl_idname)
 
@@ -74,6 +77,13 @@ classes = [
 ]
 
 def register():
+    bpy.types.Scene.resolution_hor = bpy.props.IntProperty(name="Resolution X", default=1920, soft_min=1, soft_max=1920)
+    bpy.types.Scene.resolution_ver = bpy.props.IntProperty(name= "Resolution Y", default=1080, soft_min=1, soft_max=1080)
+    bpy.types.Scene.anti_aliasing = bpy.props.BoolProperty(name="Anti Aliasing", default=True)
+    bpy.types.Scene.transparency = bpy.props.BoolProperty(name="Transparency", default=True)
+    bpy.types.Scene.animation = bpy.props.BoolProperty(name="Animation", default=False)
+    bpy.types.Scene.perspective = bpy.props.BoolProperty(name="Perspective", default=False)
+    bpy.types.Scene.output_path = bpy.props.StringProperty(name="Output Path", default="output.png")
     for cls in classes:
         bpy.utils.register_class(cls)
 
