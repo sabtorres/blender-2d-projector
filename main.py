@@ -7,21 +7,49 @@ bl_info = {
 }
 
 class RendererButton(bpy.types.Operator):
-    bl_label = "Renderer Button"
+    bl_label = "Render"
     bl_idname = "wm.render_2d_animation"
     
     # class param defaults
     resolution_x = 1920
     resolution_y = 1080
     anti_aliasing = True
-    filtering = True
     transparency = True
     animation = False
+    perspective = False
     output_path = "output.png"
     
+    def set_resolution(self, scene):
+        scene.render.resolution_x = RendererButton.resolution_x
+        scene.render.resolution_y = RendererButton.resolution_y
+        scene.render.resolution_percentage = 100
+    
+    def set_anti_aliasing(self, scene):
+        if RendererButton.anti_aliasing:
+            scene.render.filter_size = 1.50
+        else:
+            scene.render.filter_size = 0
+    
+    def set_transparency(self, scene):
+        scene.render.film_transparent = RendererButton.transparency
+        
+    def set_perspective(self):
+        if RendererButton.perspective:
+            bpy.data.cameras['Camera'].type = 'PERSP'
+        else:
+            bpy.data.cameras['Camera'].type = 'ORTHO'
+    
+    def set_output_path(self):
+        pass
+    
     def execute(self, context):
-        #todo: setup
-        bpy.ops.render.render()
+        scene = context.scene
+        scene.render.engine = 'BLENDER_EEVEE'
+        self.set_resolution(scene)
+        self.set_anti_aliasing(scene)
+        self.set_transparency(scene)
+        self.set_perspective()
+        bpy.ops.render.render(animation=RendererButton.animation, write_still=True)
         
         return { 'FINISHED' }   
 
@@ -32,6 +60,7 @@ class Animator(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
+        #todo: sliders and checkboxes
         layout.separator()
         layout.operator(RendererButton.bl_idname)
 
