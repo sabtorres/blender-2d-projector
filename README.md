@@ -6,3 +6,5 @@ to do:
 - intergrate animation
 
 - render normal maps
+
+- dynamic outlines (most likely won't happen soon)
