@@ -1,4 +1,5 @@
 import bpy
+import os
 
 bl_info = {
     "name": "2D projector",
@@ -17,7 +18,7 @@ class RendererButton(bpy.types.Operator):
     transparency = True
     animation = False
     perspective = False
-    output_path = "output.png"
+    output_path = os.getcwd() + "/output.png"
     
     def set_resolution(self, scene):
         scene.render.resolution_x = RendererButton.resolution_x
@@ -39,16 +40,19 @@ class RendererButton(bpy.types.Operator):
         else:
             bpy.data.cameras['Camera'].type = 'ORTHO'
     
-    def set_output_path(self):
-        pass
+    def set_output_path(self, scene):
+        scene.render.filepath = RendererButton.output_path
     
     def execute(self, context):
         scene = context.scene
         scene.render.engine = 'BLENDER_EEVEE'
+        
         self.set_resolution(scene)
         self.set_anti_aliasing(scene)
         self.set_transparency(scene)
         self.set_perspective()
+        self.set_output_path(scene)
+        
         bpy.ops.render.render(animation=RendererButton.animation, write_still=True)
         
         return { 'FINISHED' }   
