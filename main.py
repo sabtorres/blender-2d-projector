@@ -43,8 +43,17 @@ class RendererButton(bpy.types.Operator):
         self.set_transparency(scene)
         self.set_perspective(scene)
         self.set_output_path(scene)
-        
-        bpy.ops.render.render(animation=scene.animation, write_still=True)
+        if not scene.animation:
+            bpy.ops.render.render(write_still=True)
+        else:
+            object = context.object
+            for action in bpy.data.actions:
+                name = action.name
+                object.animation_data.action = action
+                for frame in range(scene.frame_start, scene.frame_end + 1):
+                    scene.render.filepath = scene.output_path + name + '{:08d}.png'.format(frame)
+                    scene.frame_set(frame)
+                    bpy.ops.render.render(write_still=True)
         
         return { 'FINISHED' }   
 
