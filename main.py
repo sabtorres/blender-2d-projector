@@ -34,9 +34,37 @@ class RendererButton(bpy.types.Operator):
     def set_output_path(self, scene):
         scene.render.filepath = scene.output_path
     
+    def render_frame(self, scene, frame):
+        scene.render.filepath = scene.output_path + name + '{:08d}.png'.format(frame)
+        scene.frame_set(frame)
+        bpy.ops.render.render(write_still=True)
+    
+    def render_normals(self, scene, normal_material):
+        # replace material data with normal maps
+        original_materials = []
+        for object in bpy.data.objects:
+            if object.type == 'MESH':
+                original_materials.append(object.active_material)
+                object.data.materials.append(normal_material)
+                object.active_material = normal_material
+        
+        # render
+        print("rendering...")
+        bpy.ops.render.render(write_still=True)
+        
+        # todo: put the original materials back
+        for object, material in zip(bpy.data.objects, original_materials):
+            if object.type == 'MESH':
+                object.active_material = material
+    
+    def generate_normal_material(self):
+        return bpy.data.materials.new(name="Normal")
+    
     def execute(self, context):
         scene = context.scene
         scene.render.engine = 'BLENDER_EEVEE'
+        
+        material = self.generate_normal_material()
 
         self.set_resolution(scene)
         self.set_anti_aliasing(scene)
@@ -45,15 +73,15 @@ class RendererButton(bpy.types.Operator):
         self.set_output_path(scene)
         if not scene.animation:
             bpy.ops.render.render(write_still=True)
+            self.render_normals(scene, material)
         else:
             object = context.object
             for action in bpy.data.actions:
                 name = action.name
                 object.animation_data.action = action
                 for frame in range(scene.frame_start, scene.frame_end + 1):
-                    scene.render.filepath = scene.output_path + name + '{:08d}.png'.format(frame)
-                    scene.frame_set(frame)
-                    bpy.ops.render.render(write_still=True)
+                    self.render_frame(scene, frame)
+                    self.render_normals(scene, material)
         
         return { 'FINISHED' }   
 
