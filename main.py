@@ -48,6 +48,7 @@ class RendererButton(bpy.types.Operator):
                 object.data.materials.append(normal_material)
         
         # render
+        scene.render.filepath = "normal_" + scene.render.filepath
         print("rendering...")
         bpy.ops.render.render(write_still=True)
         
@@ -57,7 +58,9 @@ class RendererButton(bpy.types.Operator):
                 object.data.materials.pop()
     
     def generate_normal_material(self):
-        return bpy.data.materials.new(name="Normal")
+        new_material = bpy.data.materials.new(name="Normal")
+        
+        return new_material
     
     def execute(self, context):
         scene = context.scene
@@ -72,7 +75,8 @@ class RendererButton(bpy.types.Operator):
         self.set_output_path(scene)
         if not scene.animation:
             bpy.ops.render.render(write_still=True)
-            self.render_normals(scene, material)
+            if scene.normals:
+                self.render_normals(scene, material)
         else:
             object = context.object
             for action in bpy.data.actions:
@@ -80,7 +84,8 @@ class RendererButton(bpy.types.Operator):
                 object.animation_data.action = action
                 for frame in range(scene.frame_start, scene.frame_end + 1):
                     self.render_frame(scene, frame)
-                    self.render_normals(scene, material)
+                    if scene.normals:
+                        self.render_normals(scene, material)
         
         return { 'FINISHED' }   
 
@@ -102,6 +107,7 @@ class Animator(bpy.types.Panel):
         layout.prop(scene, "transparency")
         layout.prop(scene, "animation")
         layout.prop(scene, "perspective")
+        layout.prop(scene, "normals")
         layout.prop(scene, "output_path")
         
         layout.separator()
@@ -119,6 +125,7 @@ def register():
     bpy.types.Scene.transparency = bpy.props.BoolProperty(name="Transparency", default=True)
     bpy.types.Scene.animation = bpy.props.BoolProperty(name="Animation", default=False)
     bpy.types.Scene.perspective = bpy.props.BoolProperty(name="Perspective", default=False)
+    bpy.types.Scene.normals = bpy.props.BoolProperty(name="Render Normals", default=False)
     bpy.types.Scene.output_path = bpy.props.StringProperty(name="Output Path", default="output.png")
     for cls in classes:
         bpy.utils.register_class(cls)
