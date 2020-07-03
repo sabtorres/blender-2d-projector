@@ -46,16 +46,15 @@ class RendererButton(bpy.types.Operator):
             if object.type == 'MESH':
                 original_materials.append(object.active_material)
                 object.data.materials.append(normal_material)
-                object.active_material = normal_material
         
         # render
         print("rendering...")
         bpy.ops.render.render(write_still=True)
         
         # todo: put the original materials back
-        for object, material in zip(bpy.data.objects, original_materials):
+        for object in bpy.data.objects:
             if object.type == 'MESH':
-                object.active_material = material
+                object.data.materials.pop()
     
     def generate_normal_material(self):
         return bpy.data.materials.new(name="Normal")
