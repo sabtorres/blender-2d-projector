@@ -59,6 +59,43 @@ class RendererButton(bpy.types.Operator):
     
     def generate_normal_material(self):
         new_material = bpy.data.materials.new(name="Normal")
+        new_material.use_nodes = True
+        
+        links = new_material.node_tree.links
+        nodes = new_material.node_tree.nodes
+        nodes.clear()
+        
+        geometry = nodes.new(type="ShaderNodeNewGeometry")
+        
+        vector_transform = nodes.new(type="ShaderNodeVectorTransform")
+        vector_transform.convert_to = 'CAMERA'
+        links.new(geometry.outputs[1], vector_transform.inputs[0])
+        
+        combine_xyz = nodes.new(type="ShaderNodeCombineXYZ")
+        combine_xyz.inputs[0].default_value = 0.5
+        combine_xyz.inputs[1].default_value = 0.5
+        combine_xyz.inputs[2].default_value = -0.5
+        
+        multiply = nodes.new(type="ShaderNodeMixRGB")
+        multiply.blend_type = "MULTIPLY"
+        multiply.inputs[0].default_value = 1.0
+        links.new(vector_transform.outputs[0], multiply.inputs[1])
+        links.new(combine_xyz.outputs[0], multiply.inputs[2])
+        
+        add = nodes.new(type="ShaderNodeMixRGB")
+        add.blend_type = 'ADD'
+        add.inputs[0].default_value = 1.0
+        links.new(multiply.outputs[0], add.inputs[1])
+        add.inputs[2].default_value = (0.5, 0.5, 0.5, 1.0)
+        
+        rgb_curve = nodes.new(type="ShaderNodeRGBCurve")
+        rgb_curve.mapping.curves[0].points[0].location = (0.0, 1.0)
+        rgb_curve.mapping.curves[0].points[1].location = (1.0, 0.0)
+        rgb_curve.inputs[0].default_value = 1.0
+        links.new(add.outputs[0], rgb_curve.inputs[1])
+        
+        output = nodes.new(type="ShaderNodeOutputMaterial")
+        links.new(rgb_curve.outputs[0], output.inputs[0])
         
         return new_material
     
