@@ -27,7 +27,7 @@ Add-on for projecting 3D animation to 2D image sheets using Blender
 
 - If you're not happy about something here, feel free to improve this program by making your own pull request, or if you can't/don't want to program, please open an issue and let me know about it. While you're at it, a motivational star will surely make me want to improve this.
 
-- This only supports the EEVEE render engine for now, and was only tested in Blender version 2.82. I might upgrade and change this soon though.
+- This only supports the EEVEE render engine for now, and works with Blender 2.83 LTS.
 
 - Rendering animations will render every frame. This is a process that takes a fair amount of time and produces lots of images. Be sure to make a directory specifically for this output, and be patient.
 
