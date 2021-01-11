@@ -1,10 +1,6 @@
 # blender-2d-projector
 Add-on for projecting 3D animation to 2D image sheets using Blender
 
-### To-do's:
-
-- dynamic outlines (most likely won't happen soon)
-
 ### How to install the addon
 
 - Clone this repository
