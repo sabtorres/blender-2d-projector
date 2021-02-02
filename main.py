@@ -18,7 +18,7 @@ class RendererButton(bpy.types.Operator):
     
     def set_anti_aliasing(self, scene):
         if scene.anti_aliasing:
-            scene.render.filter_size = 1.50
+            scene.render.filter_size = 1.50S
         else:
             scene.render.filter_size = 0
     
@@ -34,28 +34,24 @@ class RendererButton(bpy.types.Operator):
     def set_output_path(self, scene):
         scene.render.filepath = scene.output_path
     
-    def render_frame(self, scene, frame):
-        scene.render.filepath = scene.output_path + name + '{:08d}.png'.format(frame)
+    def render_frame(self, scene, frame, animation_name):
+        scene.render.filepath = scene.output_path + '_' + animation_name + '{:08d}.png'.format(frame)
         scene.frame_set(frame)
         bpy.ops.render.render(write_still=True)
     
     def render_normals(self, scene, normal_material):
         # replace material data with normal maps
         original_materials = []
-        for object in bpy.data.objects:
-            if object.type == 'MESH':
-                original_materials.append(object.active_material)
-                object.data.materials.append(normal_material)
+        scene.render.engine = 'BLENDER_WORKBENCH'
+        scene.display.shading.light = 'MATCAP'
+        scene.display.shading.render_pass = 'NORMAL'
         
         # render
-        scene.render.filepath = "normal_" + scene.render.filepath
+        scene.render.filepath = scene.render.filepath + "_normal.png"
         print("rendering...")
         bpy.ops.render.render(write_still=True)
         
-        # todo: put the original materials back
-        for object in bpy.data.objects:
-            if object.type == 'MESH':
-                object.data.materials.pop()
+        scene.render.engine = 'BLENDER_EEVEE'
     
     def generate_normal_material(self):
         new_material = bpy.data.materials.new(name="Normal")
@@ -119,8 +115,8 @@ class RendererButton(bpy.types.Operator):
             for action in bpy.data.actions:
                 name = action.name
                 object.animation_data.action = action
-                for frame in range(scene.frame_start, scene.frame_end + 1):
-                    self.render_frame(scene, frame)
+                for frame in range(scene.frame_start, scene.frame_end + 1, scene.animation_frame_offset):
+                    self.render_frame(scene, frame, name)
                     if scene.normals:
                         self.render_normals(scene, material)
         
@@ -140,6 +136,7 @@ class Animator(bpy.types.Panel):
         scene = context.scene
         layout.prop(scene, "resolution_hor")
         layout.prop(scene, "resolution_ver")
+        layout.prop(scene, "animation_frame_offset")
         layout.prop(scene, "anti_aliasing")
         layout.prop(scene, "transparency")
         layout.prop(scene, "animation")
@@ -158,6 +155,7 @@ classes = [
 def register():
     bpy.types.Scene.resolution_hor = bpy.props.IntProperty(name="Resolution X", default=1920, soft_min=1, soft_max=1920)
     bpy.types.Scene.resolution_ver = bpy.props.IntProperty(name= "Resolution Y", default=1080, soft_min=1, soft_max=1080)
+    bpy.types.Scene.animation_frame_offset = bpy.props.IntProperty(name="Frame Offset", default=1, soft_min=1, soft_max=60)
     bpy.types.Scene.anti_aliasing = bpy.props.BoolProperty(name="Anti Aliasing", default=True)
     bpy.types.Scene.transparency = bpy.props.BoolProperty(name="Transparency", default=True)
     bpy.types.Scene.animation = bpy.props.BoolProperty(name="Animation", default=False)
