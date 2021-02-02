@@ -18,7 +18,7 @@ class RendererButton(bpy.types.Operator):
     
     def set_anti_aliasing(self, scene):
         if scene.anti_aliasing:
-            scene.render.filter_size = 1.50S
+            scene.render.filter_size = 1.50
         else:
             scene.render.filter_size = 0
     
